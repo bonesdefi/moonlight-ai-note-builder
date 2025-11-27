@@ -12,64 +12,57 @@ import os
 import json
 import asyncio
 import httpx
-from dotenv import load_dotenv
+# dotenv import removed - using hardcoded API keys for demo
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-# Load environment variables
-load_dotenv()
+# Environment loading removed - using hardcoded API keys for demo
 
-# API Keys (hardcoded for demo - move to .env for production)
-# API Keys are loaded from .env file
+# API Keys (hardcoded for demo)
+# For production, move these to environment variables or a secure config file
 
 # ============================================================
 # TRANSCRIPTION MODULE
 # ============================================================
 
-async def transcribe_audio(audio_bytes: bytes, mimetype: str = "audio/wav") -> dict:
-    """Transcribe audio bytes using Deepgram's API."""
-    from deepgram import DeepgramClient, PrerecordedOptions
-    
-    api_key = os.getenv("DEEPGRAM_API_KEY")
-    if not api_key:
-        raise ValueError("DEEPGRAM_API_KEY environment variable not set")
-    
-    deepgram = DeepgramClient(api_key)
-    
-    # Use lower-level client to set timeout
-    client = deepgram.listen.asyncprerecorded.v("1")
-    url = f"{client.config.url}/v1/listen"
-    
-    options = PrerecordedOptions(
-        model="nova-2",
-        smart_format=True,
-        punctuate=True,
-        diarize=True,
-        utterances=True,
-    )
-    
-    # Convert options to dict
-    options_dict = json.loads(options.to_json())
-    
-    # Increase timeout to 5 minutes (300s) for large files
-    response_json = await client.post(
-        url, 
-        options=options_dict, 
-        content=audio_bytes,
-        timeout=httpx.Timeout(300.0, connect=10.0)
-    )
-    
-    response_data = json.loads(response_json)
-    
-    transcript = response_data['results']['channels'][0]['alternatives'][0]['transcript']
-    confidence = response_data['results']['channels'][0]['alternatives'][0]['confidence']
-    
-    return {"transcript": transcript, "confidence": confidence}
-
-
 def transcribe_audio_sync(audio_bytes: bytes, mimetype: str = "audio/wav") -> dict:
-    """Synchronous wrapper for transcription."""
-    return asyncio.run(transcribe_audio(audio_bytes, mimetype))
+    """Transcribe audio bytes using Deepgram's REST API with a longer timeout.
+    This bypasses the Deepgram SDK's default timeout limits for large files.
+    Returns a dict with ``transcript`` and ``confidence`` or raises an error.
+    """
+    # Use Streamlit secrets for API key (works locally and on Streamlit Cloud)
+    api_key = st.secrets["DEEPGRAM_API_KEY"]
+
+    url = "https://api.deepgram.com/v1/listen"
+    headers = {
+        "Authorization": f"Token {api_key}",
+        "Content-Type": mimetype,
+    }
+    params = {
+        "model": "nova-2",
+        "smart_format": "true",
+        "punctuate": "true",
+        "diarize": "true",
+        "utterances": "true",
+    }
+    # Increased timeout for larger audio files (10 minutes total, 30 seconds connect)
+    timeout = httpx.Timeout(600.0, connect=30.0)
+    try:
+        # Log audio file size for debugging
+        audio_size_mb = len(audio_bytes) / (1024 * 1024)
+        print(f"Transcribing audio file: {audio_size_mb:.2f} MB")
+        
+        response = httpx.post(url, params=params, headers=headers, content=audio_bytes, timeout=timeout)
+        response.raise_for_status()
+    except httpx.TimeoutException:
+        raise RuntimeError(f"Transcription timed out. Audio file may be too large ({audio_size_mb:.2f} MB). Try using a shorter recording or lower quality audio.")
+    except Exception as e:
+        # Propagate a clear error message for the UI
+        raise RuntimeError(f"Deepgram transcription failed: {e}")
+    data = response.json()
+    transcript = data["results"]["channels"][0]["alternatives"][0]["transcript"]
+    confidence = data["results"]["channels"][0]["alternatives"][0]["confidence"]
+    return {"transcript": transcript, "confidence": confidence}
 
 
 # ============================================================
@@ -115,9 +108,8 @@ def generate_soap_note(transcript: str, additional_context: str = "") -> SOAPNot
     """Generate a SOAP note from a session transcript."""
     from anthropic import Anthropic
     
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+    # Use Streamlit secrets for API key (works locally and on Streamlit Cloud)
+    api_key = st.secrets["ANTHROPIC_API_KEY"]
     
     client = Anthropic(api_key=api_key)
     
