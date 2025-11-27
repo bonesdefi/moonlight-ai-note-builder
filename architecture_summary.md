@@ -1,17 +1,25 @@
 # Architecture Summary: Moonlight AI Note Builder
 
+**🚀 Live Deployment:** [https://moonlight-ai.streamlit.app/](https://moonlight-ai.streamlit.app/)
+
 ## System Overview
-The Moonlight AI Note Builder is a lightweight, HIPAA-aware prototype designed to streamline clinical documentation. It transforms unstructured therapy session audio into structured, EMR-ready SOAP notes using a state-of-the-art AI pipeline.
+The Moonlight AI Note Builder is a lightweight, HIPAA-aware clinical documentation tool designed to streamline therapy session notes. It transforms unstructured therapy session audio into structured, EMR-ready SOAP notes using a state-of-the-art AI pipeline. The application is deployed on Streamlit Cloud for instant accessibility.
 
 ## Technology Stack & Rationale
 *   **Frontend: Streamlit**
     *   *Why:* Rapid prototyping, native Python integration, and built-in support for audio handling. Allows for a functional, interactive UI without the overhead of a complex React/Vue setup.
 *   **Transcription: Deepgram Nova-2**
     *   *Why:* Industry-leading speed and accuracy for medical terminology. The `nova-2` model offers superior diarization (speaker separation) and smart formatting compared to standard Whisper implementations.
-*   **Intelligence: Anthropic Claude 3.5 Sonnet**
+*   **Intelligence: Anthropic Claude 4.5 Haiku**
     *   *Why:* Superior reasoning capabilities for clinical context compared to GPT-4o. Claude excels at maintaining clinical tone, following complex formatting instructions, and reducing hallucinations in medical summaries.
 *   **Validation: Pydantic**
     *   *Why:* Robust data validation ensures that generated notes meet strict schema requirements before they can be exported, preventing incomplete data entry.
+
+## Deployment & Configuration
+The application is deployed on **Streamlit Cloud** with the following configuration:
+*   **Secrets Management:** API keys are stored using Streamlit's built-in secrets management (`.streamlit/secrets.toml` locally, Secrets dashboard on cloud). This approach resolves transcription issues that occur with traditional `.env` files and works seamlessly across environments.
+*   **Dependencies:** The application requires `streamlit`, `httpx`, `anthropic`, and `pydantic`. Full dependency list is maintained in `requirements.txt`.
+*   **Zero Local State:** The application is stateless and processes all data in-memory, making it suitable for cloud deployment without persistent storage requirements.
 
 ## HIPAA Compliance Strategy
 For a production deployment, the following measures would be implemented:

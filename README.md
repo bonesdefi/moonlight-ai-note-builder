@@ -4,6 +4,8 @@ Clinical documentation assistant that transforms therapy session recordings into
 
 **Built for Moonlight Mountain Recovery**
 
+🚀 **[Live Demo: https://moonlight-ai.streamlit.app/](https://moonlight-ai.streamlit.app/)**
+
 ## Features
 
 - **Audio Transcription**: Upload session recordings for automatic transcription using Deepgram Nova-2
@@ -20,18 +22,23 @@ cd moonlight-note-builder
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Environment Variables
+### 2. Configure API Keys
 
-Create a `.env` file with your API keys:
+Create a `.streamlit/secrets.toml` file with your API keys:
 
-```
-DEEPGRAM_API_KEY=your_deepgram_key_here
-ANTHROPIC_API_KEY=your_anthropic_key_here
+```bash
+mkdir -p .streamlit
+cat > .streamlit/secrets.toml << EOF
+DEEPGRAM_API_KEY = "your_deepgram_key_here"
+ANTHROPIC_API_KEY = "your_anthropic_key_here"
+EOF
 ```
 
 Get your keys from:
 - Deepgram: https://console.deepgram.com/
 - Anthropic: https://console.anthropic.com/
+
+> **Note:** Using Streamlit secrets (`.streamlit/secrets.toml`) instead of `.env` files resolves transcription issues with uploaded audio files and works seamlessly on Streamlit Cloud.
 
 ### 3. Run the App
 
@@ -54,7 +61,7 @@ The app will open at `http://localhost:8501`
 |-----------|------------|
 | Frontend | Streamlit |
 | Transcription | Deepgram Nova-2 |
-| Note Generation | Claude |
+| Note Generation | Claude 4.5 Haiku |
 | Validation | Pydantic |
 
 ## HIPAA Considerations
