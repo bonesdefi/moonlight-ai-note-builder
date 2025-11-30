@@ -16,11 +16,6 @@ import httpx
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-# Environment loading removed - using hardcoded API keys for demo
-
-# API Keys (hardcoded for demo)
-# For production, move these to environment variables or a secure config file
-
 # ============================================================
 # TRANSCRIPTION MODULE
 # ============================================================
